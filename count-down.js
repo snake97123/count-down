@@ -9,7 +9,14 @@ const seconds = document.querySelector('#seconds');
 const startBtn = document.querySelector('#start-btn');
 const warningMessage = document.querySelector('#warning-message'); 
 
+let interval;
+
 startBtn.addEventListener('click', () => {
+  if(startBtn.textContent === 'リセット') {
+    resetCountDown();
+    return;
+  }
+  
   const name = eventName.value;
   const date = eventDate.value;
   const time = eventTime.value || '00:00';
@@ -35,7 +42,7 @@ function setEventName(name) {
 }
 
 function startCountDown(eventDateTime) {
-  const interval = setInterval(() => {
+   interval = setInterval(() => {
     const now = new Date();
     const diff = eventDateTime - now;
 
@@ -58,4 +65,19 @@ function startCountDown(eventDateTime) {
     minutes.textContent = String(m).padStart(2, '0');
     seconds.textContent = String(s).padStart(2, '0');
   }, 1000);
+
+  startBtn.textContent = 'リセット';
 }
+
+function resetCountDown() {
+    clearInterval(interval);
+    startBtn.textContent = 'スタート';
+    displayEventName.textContent = '〇〇';
+    days.textContent = '00';
+    hours.textContent = '00';
+    minutes.textContent = '00';
+    seconds.textContent = '00';
+    eventName.value = '';
+    eventDate.value = '';
+    eventTime.value = '';
+};
