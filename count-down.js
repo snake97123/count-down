@@ -52,6 +52,9 @@ function startCountDown(eventDateTime) {
       hours.textContent = '00';
       minutes.textContent = '00';
       seconds.textContent = '00';
+
+      alert('イベントの時間になりました！')
+      resetCountDown();
       return;
     }
  
