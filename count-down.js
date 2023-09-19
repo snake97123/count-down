@@ -12,54 +12,47 @@ const events = [];
 const addEventBtn = document.querySelector('#add-event-btn');
 const eventsContainer = document.querySelector('#events-container');
 
-let interval;
+let intervals = [];
 
-startBtn.addEventListener('click', () => {
-  if(startBtn.textContent === 'リセット') {
-    resetCountDown();
-    return;
-  }
-  
+function getEventData() {
   const name = eventName.value;
   const date = eventDate.value;
   const time = eventTime.value || '00:00';
 
   if (!name) {
     warningMessage.textContent = 'イベント名を入力してください';
-    return;
+    return null;
   }
 
   const eventDateTime = new Date(`${date}T${time}`);
   if(isNaN(eventDateTime.getTime())) {
     warningMessage.textContent = '日付または時間が正しく入力されていません';
-    return;
+    return null;
   }
 
   warningMessage.textContent = '';
-  setEventName(name);
-  startCountDown(eventDateTime);
+  return { name, date: eventDateTime };
+}
+
+startBtn.addEventListener('click', () => {
+  if(startBtn.textContent === 'リセット') {
+    resetCountDown();
+    return;
+  }
+
+  const eventData = getEventData();
+  if (!eventData) return;
+
+  setEventName(eventData.name);
+  startCountDown(eventData.date, days, hours, minutes, seconds);
 });
 
 addEventBtn.addEventListener('click', () => {
-  const name = eventName.value;
-  const date = eventDate.value;
-  const time = eventTime.value || '00:00';
+  const eventData = getEventData();
+  if (!eventData) return;
 
-  if (!name) {  
-    warningMessage.textContent = 'イベント名を入力してください';
-    return;
-  }
-
-  const eventDateTime = new Date(`${date}T${time}`);
-  if(isNaN(eventDateTime.getTime())) {
-    warningMessage.textContent = '日付または時間が正しく入力されていません';
-    return;
-  }
-
-  warningMessage.textContent = '';
-  events.push({ name, date: eventDateTime });
-  createEventSection(name, eventDateTime);
-
+  events.push(eventData);
+  createEventSection(eventData.name, eventData.date);
 });
 
 function createEventSection(name, eventDateTime) {
@@ -74,65 +67,34 @@ function createEventSection(name, eventDateTime) {
   `;
 
   eventsContainer.appendChild(section);
-  addEventStartCountDown(eventDateTime, section);
+  const daysElem = section.querySelector('.days');
+  const hoursElem = section.querySelector('.hours');  
+  const minutesElem = section.querySelector('.minutes');
+  const secondsElem = section.querySelector('.seconds');
+
+  startCountDown(eventDateTime, daysElem, hoursElem, minutesElem, secondsElem);
 }
+
 function setEventName(name) {
   displayEventName.textContent = name;
 }
 
-function startCountDown(eventDateTime, section) {
-   interval = setInterval(() => {
+function startCountDown(eventDateTime, daysElem, hoursElem, minutesElem, secondsElem) {
+  const interval = setInterval(() => {
     const now = new Date();
     const diff = eventDateTime - now;
-    
 
     if(diff <= 0) {
       clearInterval(interval);
-      days.textContent = '00';
-      hours.textContent = '00';
-      minutes.textContent = '00';
-      seconds.textContent = '00';
-
-      alert('イベントの時間になりました！')
-      resetCountDown();
-      return;
-    }
- 
-    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const s = Math.floor((diff % (1000 * 60)) / 1000);
-
-    days.textContent = String(d).padStart(2, '0');
-    hours.textContent = String(h).padStart(2, '0');
-    minutes.textContent = String(m).padStart(2, '0');
-    seconds.textContent = String(s).padStart(2, '0');
-  }, 1000);
-
-  startBtn.textContent = 'リセット';
-}
-
-function addEventStartCountDown(eventDateTime, section) {
-    interval2 = setInterval(() => {
-    const now = new Date();
-    const diff = eventDateTime - now;
-    const daysElem = section.querySelector('.days');
-    const hoursElem = section.querySelector('.hours');  
-    const minutesElem = section.querySelector('.minutes');
-    const secondsElem = section.querySelector('.seconds');
-
-    if(diff <= 0) {
-      clearInterval(interval2);
       daysElem.textContent = '00';
       hoursElem.textContent = '00';
       minutesElem.textContent = '00';
       secondsElem.textContent = '00';
-
-      alert('イベントの時間になりました！')
+      alert('イベントの時間になりました！');
       resetCountDown();
       return;
     }
- 
+
     const d = Math.floor(diff / (1000 * 60 * 60 * 24));
     const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -143,20 +105,22 @@ function addEventStartCountDown(eventDateTime, section) {
     minutesElem.textContent = String(m).padStart(2, '0');
     secondsElem.textContent = String(s).padStart(2, '0');
   }, 1000);
-    
+
+  intervals.push(interval);
+  startBtn.textContent = 'リセット';
 }
 
 function resetCountDown() {
-    clearInterval(interval);
-    clearInterval(interval2);
-    eventsContainer.innerHTML = '';
-    startBtn.textContent = 'スタート';
-    displayEventName.textContent = '〇〇';
-    days.textContent = '00';
-    hours.textContent = '00';
-    minutes.textContent = '00';
-    seconds.textContent = '00';
-    eventName.value = '';
-    eventDate.value = '';
-    eventTime.value = '';
-};
+  intervals.forEach(clearInterval);
+  intervals = [];
+  eventsContainer.innerHTML = '';
+  startBtn.textContent = 'スタート';
+  displayEventName.textContent = '〇〇';
+  days.textContent = '00';
+  hours.textContent = '00';
+  minutes.textContent = '00';
+  seconds.textContent = '00';
+  eventName.value = '';
+  eventDate.value = '';
+  eventTime.value = '';
+}
